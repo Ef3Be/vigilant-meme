@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>CryptoQR - Güvenlik Doğrulaması</title>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: #1e293b;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            width: 500px;
+            text-align: left;
+        }
+        h2 { color: #38bdf8; text-align: center; margin-top: 0; }
+        .info-group {
+            margin-bottom: 20px;
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #38bdf8;
+        }
+        .info-group label {
+            font-size: 12px;
+            color: #94a3b8;
+            display: block;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .info-group .value {
+            font-family: monospace;
+            color: #f1f5f9;
+            word-break: break-all;
+            font-size: 13px;
+        }
+        .status-box {
+            background: #065f46;
+            border: 1px solid #059669;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 25px;
+        }
+        .status-box h3 { margin: 0 0 5px 0; color: #a7f3d0; font-size: 14px; }
+        .status-box .status-text { font-size: 16px; font-weight: bold; color: #ffffff; }
+        .math-note {
+            font-size: 12px;
+            color: #94a3b8;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🛡️ Kriptografik Doğrulama</h2>
+        
+        <div class="info-group">
+            <label>1. Yakalanan Şifreli Veri Paketi (Ciphertext):</label>
+            <div class="value">{{ cipher_data }}</div>
+        </div>
+
+        <div class="info-group" style="border-left-color: #a855f7;">
+            <label>2. Sistem RSA Parametreleri:</label>
+            <div class="value">
+                Modül (n): {{ n }} | Açık Üs (e): {{ e }}
+            </div>
+        </div>
+
+        {% if is_valid %}
+        <div class="status-box">
+            <h3>DURUM RAPORU</h3>
+            <div class="status-text">✓ Veri Bütünlüğü Doğrulandı (Güvenli Paket)</div>
+        </div>
+        {% else %}
+        <div class="status-box" style="background: #7f1d1d; border-color: #991b1b;">
+            <h3>DURUM RAPORU</h3>
+            <div class="status-text">⚠ Geçersiz veya Bozuk Veri Paketi</div>
+        </div>
+        {% endif %}
+
+        <div class="math-note">
+            Bu bağlantı RSA asimetrik şifreleme protokolüyle mühürlenmiştir. İçerik gizliliği koruma altındadır.
+        </div>
+    </div>
+</body>
+</html>
