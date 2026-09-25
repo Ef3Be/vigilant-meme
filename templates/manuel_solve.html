@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manuel Şifre Çözücü</title>
+    <style>
+        body {
+            background-color: #0d1b2a;
+            color: #e0fbfc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background-color: #1b263b;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            border: 1px solid #415a77;
+        }
+        h2 { color: #4ea8de; margin-bottom: 20px; }
+        textarea {
+            width: 100%;
+            height: 80px;
+            background-color: #0d1b2a;
+            color: #fff;
+            border: 1px solid #415a77;
+            border-radius: 6px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 1rem;
+            resize: none;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3a86ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+        }
+        button:hover { background-color: #2667cc; }
+        .result-box {
+            background-color: #0d1b2a;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            border: 1px solid #52b788;
+        }
+        .label { font-size: 0.8rem; color: #94d2bd; font-weight: bold; }
+        .text { font-size: 1.3rem; color: #52b788; font-weight: bold; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>🔓 Manuel Şifre Çözücü</h2>
+        <form method="POST">
+            <div style="text-align: left;" class="label">ŞİFRELİ METNİ YAPIŞTIRIN (Örn: 28-1369-1313):</div>
+            <textarea name="cipher_text" placeholder="Şifreli veri paketini buraya girin...">{{ cipher_input }}</textarea>
+            <button type="submit">Şifreyi Çöz</button>
+        </form>
+
+        {% if decrypted_result is not none %}
+        <div class="result-box">
+            <div class="label">ÇÖZÜLEN ORİJİNAL METİN:</div>
+            <div class="text">{{ decrypted_result }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+</body>
+</html>
