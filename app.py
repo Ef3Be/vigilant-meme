@@ -2,36 +2,43 @@ from flask import Flask, render_template, request
 import qrcode
 import io
 import base64
+from cryptography.fernet import Fernet
 
 app = Flask(__name__)
 
-p = 61
-q = 53
-n = p * q            # 323
-phi = (p - 1) * (q - 1) # 3120
-e = 17               
-d = 2753             
+# Sabit bir anahtar oluşturuyoruz (Gerçek projelerde güvenli saklanır, 
+# proje prototipi için bu sabit anahtar her sunucu yeniden başlatıldığında verinin çözülebilmesini sağlar)
+# Fernet 32 baytlık url-safe base64 encoded anahtar ister:
+SECRET_KEY = b'12345678901234567890123456789012=' # 32 baytlık sabit bir temel
+# Güvenli Fernet anahtarı türetelim:
+import base64
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import pbkdf2_hmac
+
+# Prototip için sabit ve kararlı bir anahtar türetiyoruz:
+kdf = pbkdf2_hmac(
+    hashes.SHA256(),
+    length=32,
+    salt=b'tubitak_guvenli_qr_salt',
+    iterations=100_000,
+)
+key = base64.urlsafe_b64encode(kdf)
+cipher_suite = Fernet(key)
 
 def rsa_encrypt(text):
-    encrypted = []
-    for char in text:
-        m = ord(char)
-        c = pow(m, e, n)
-        encrypted.append(str(c))
-    return "-".join(encrypted)
+    try:
+        # Fernet kullanarak metni şifreliyoruz (AES tabanlı simetrik şifreleme)
+        encrypted_bytes = cipher_suite.encrypt(text.encode('utf-8'))
+        return encrypted_bytes.decode('utf-8')
+    except Exception:
+        return ""
 
 def rsa_decrypt(cipher_text):
     try:
         if not cipher_text:
             return ""
-        decrypted = []
-        parts = cipher_text.split("-")
-        for part in parts:
-            if part:
-                c = int(part)
-                m = pow(c, d, n)
-                decrypted.append(chr(m))
-        return "".join(decrypted)
+        decrypted_bytes = cipher_suite.decrypt(cipher_text.encode('utf-8'))
+        return decrypted_bytes.decode('utf-8')
     except Exception:
         return "[Geçersiz Şifre Formatı]"
 
@@ -63,15 +70,11 @@ def index():
 def coz():
     cipher_data = request.args.get("data", "")
     
-    # Güvenlik önlemi: İsteğe bağlı olarak orijinal metni direkt açıkta göstermiyoruz, 
-    # sadece veri bütünlüğünün ve RSA imzasının geçerli olduğunu doğruluyoruz.
-    # Eğer test etmek istersen alttaki satırı aktif edebilirsin, ancak gizlilik için gizli tutuyoruz:
-    # original_text = rsa_decrypt(cipher_data)
+    # Verinin bu sisteme ait ve bütünlüğünün bozulmamış olduğunu test ediyoruz
+    decrypted_text = rsa_decrypt(cipher_data)
+    is_valid = bool(cipher_data and decrypted_text != "[Geçersiz Şifre Formatı]")
     
-    # Sistem sadece şifreli paketin bozulmamış olduğunu ve geçerli bir RSA modülüne ait olduğunu doğrular.
-    is_valid = bool(cipher_data)
-    
-    return render_template("solve.html", cipher_data=cipher_data, is_valid=is_valid, n=n, e=e)
+    return render_template("solve.html", cipher_data=cipher_data, is_valid=is_valid, decrypted_text=decrypted_text)
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
