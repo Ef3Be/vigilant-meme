@@ -3,61 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RSA Güvenli QR & Zaman Aşımı Sistemi</title>
+    <title>T.C. TÜBİTAK - RSA Güvenli Belge ve Doğrulama Sistemi</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .card { background: #1e293b; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 420px; text-align: center; }
-        h2 { color: #38bdf8; margin-bottom: 20px; }
-        input[type="text"] { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #475569; border-radius: 8px; background: #0f172a; color: #fff; box-sizing: border-box; font-size: 16px; }
-        button { background: #0284c7; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
-        button:hover { background: #0369a1; }
-        .qr-container { margin-top: 20px; }
-        img { border-radius: 8px; background: #fff; padding: 10px; max-width: 220px; }
-        .timer { margin-top: 15px; font-size: 18px; font-weight: bold; color: #facc15; }
-        .expired { color: #ef4444; font-weight: bold; }
-        .menu-link { display: block; margin-top: 20px; color: #38bdf8; text-decoration: none; font-size: 14px; }
-        .menu-link:hover { text-decoration: underline; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h2>🔒 RSA & Zaman Aşımlı QR</h2>
-        <form method="POST">
-            <input type="text" name="plain_text" placeholder="Şifrelenecek metni girin..." required autocomplete="off">
-            <button type="submit">Güvenli QR Kod Üret</button>
-        </form>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
 
-        {% if qr_code %}
-        <div class="qr-container">
-            <img src="data:image/png;base64,{{ qr_code }}" alt="QR Kod">
-            <div class="timer" id="timer">Kalan Süre: <span id="time">04:00</span></div>
-        </div>
-        
-        <script>
-            // 4 dakika (240 saniye) geri sayım sayacı
-            let timeLeft = 240;
-            const timerElement = document.getElementById("time");
-            const timerContainer = document.getElementById("timer");
+        .portal-card {
+            background: #ffffff;
+            border: 1px solid #dcdcdc;
+            border-top: 4px solid #003366; /* Resmi kurumlac lacivert */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            padding: 35px;
+            border-radius: 4px;
+            width: 100%;
+            max-width: 460px;
+            box-sizing: border-box;
+        }
 
-            const countdown = setInterval(() => {
-                let minutes = Math.floor(timeLeft / 60);
-                let seconds = timeLeft % 60;
-                
-                minutes = minutes < 10 ? "0" + minutes : minutes;
-                seconds = seconds < 10 ? "0" + seconds : seconds;
-                
-                timerElement.innerText = minutes + ":" + seconds;
-                
-                if (timeLeft <= 0) {
-                    clearInterval(countdown);
-                    timerContainer.innerHTML = "<span class='expired'>⚠️ QR Kodun Süresi Doldu! (Geçersiz)</span>";
-                }
-                timeLeft--;
-            }, 1000);
-        </script>
-        {% endif %}
+        .header-logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
 
-        <a href="/cozumle" class="menu-link">🔓 Manuel Şifre Çözücü Sayfasına Git</a>
-    </div>
-</body>
-</html>
+        .header-logo h1 {
+            font-size: 16px;
+            color: #555;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        h2 {
+            color: #003366;
+            font-size: 20px;
+            text-align: center;
+            margin-top: 5px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            background: #fff;
+            border: 1px solid #ccc;
+            color: #333;
+            font-size: 14px;
+            border-radius: 4px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: #003366;
+            box-shadow: 0 0 4px rgba(0, 51, 102, 0.2);
+        }
+
+        button {
+            background: #003366;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #002244;
+        }
+
+        .qr-section {
+            margin-top: 25px;
+            text-align: center;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        .qr-frame {
+            display: inline-block;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        img {
+            display: block;
+            max-width: 180px;
+        }
+
+        .timer {
+            margin-top: 12px;
+            font-size: 14px;
+            
