@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request
 import qrcode
 import io
 import base64
@@ -6,7 +6,7 @@ import time
 
 app = Flask(__name__)
 
-# RSA Parametreleri (TÜBİTAK projeniz için belirlenen değerler)
+# RSA Parametreleri
 P = 61
 Q = 53
 N = 3233  # P * Q
@@ -14,11 +14,9 @@ PHI = 3120 # (P-1) * (Q-1)
 E = 17
 D = 2753   # Gizli anahtar
 
-# Süre sınırı: 4 dakika (saniye cinsinden)
-EXPIRATION_TIME = 4 * 60 
+EXPIRATION_TIME = 4 * 60  # 4 dakika süre sınırı
 
 def encrypt(text):
-    # Her karakteri RSA ile şifrele ve tire (-) ile birleştir
     encrypted = [str(pow(ord(char), E, N)) for char in text]
     return "-".join(encrypted)
 
@@ -37,14 +35,16 @@ def index():
     if request.method == "POST":
         plain_text = request.form.get("plain_text")
         if plain_text:
-            # Şifreli metni oluştur
             c_text = encrypt(plain_text)
-            # Şu anki zaman damgasını ekle (Format: Şifre|ZamanDamgası)
             current_time = int(time.time())
             full_payload = f"{c_text}|{current_time}"
             
-            # QR kod üret
-            img = qrcode.make(full_payload)
+            # QR kodun içine doğrudan /coz linkini gömüyoruz
+            # (Render'daki güncel domain adresine göre otomatik algılar veya tam URL yazabilirsin)
+            base_url = request.host_url.rstrip('/')
+            qr_target_url = f"{base_url}/coz?data={full_payload}"
+            
+            img = qrcode.make(qr_target_url)
             buffered = io.BytesIO()
             img.save(buffered, format="PNG")
             qr_code = base64.b64encode(buffered.getvalue()).decode("utf-8")
@@ -56,28 +56,26 @@ def index():
 def coz():
     data = request.args.get("data", "")
     if not data:
-        return render_template("solve.html", error="Veri bulunamadı!", decrypted=None)
+        return render_template("solve.html", error="VERİ BULUNAMADI!", decrypted=None)
     
     try:
-        # Veriyi ve zaman damgasını ayır
         if "|" in data:
             c_text, timestamp_str = data.rsplit("|", 1)
             msg_time = int(timestamp_str)
             current_time = int(time.time())
             
-            # Zaman aşımı kontrolü (4 dakika)
             if current_time - msg_time > EXPIRATION_TIME:
-                return render_template("solve.html", error="❌ HATA: Bu QR kodun süresi doldu! (4 dakikalık geçerlilik süresi aşıldı).", decrypted=None)
+                return render_template("solve.html", error="[!] HATA: QR KODUN SÜRESİ DOLDU! (4 Dakikalık TTL Sınırı Aşıldı)", decrypted=None, cipher_data=c_text)
         else:
-            c_text = data # Zaman damgası olmayan eski tarz kodlar için geri uyumluluk
+            c_text = data
             
         decrypted = decrypt(c_text)
         if decrypted is None:
-            return render_template("solve.html", error="Şifre çözülemedi!", decrypted=None)
+            return render_template("solve.html", error="[!] ŞİFRE ÇÖZÜLEMEDİ (Hatalı Format)", decrypted=None, cipher_data=c_text)
             
-        return render_template("solve.html", decrypted=decrypted, error=None)
+        return render_template("solve.html", decrypted=decrypted, error=None, cipher_data=c_text)
     except Exception as e:
-        return render_template("solve.html", error=f"Geçersiz veri formatı: {str(e)}", decrypted=None)
+        return render_template("solve.html", error=f"[!] KRİTİK HATA: {str(e)}", decrypted=None, cipher_data=data)
 
 @app.route("/cozumle", methods=["GET", "POST"])
 def manuel_cozumle():
@@ -92,13 +90,13 @@ def manuel_cozumle():
                     msg_time = int(timestamp_str)
                     current_time = int(time.time())
                     if current_time - msg_time > EXPIRATION_TIME:
-                        decrypted_result = "❌ HATA: Girilen şifreli verinin süresi dolmuş! (4 dakikalık limit aşıldı)."
+                        decrypted_result = "[!] HATA: GİRİLEN VERİNİN SÜRESİ DOLMUŞ!"
                     else:
                         decrypted_result = decrypt(c_text)
                 else:
                     decrypted_result = decrypt(cipher_input)
             except Exception:
-                decrypted_result = "Şifre çözme başarısız (Hatalı format)."
+                decrypted_result = "[!] ÇÖZÜMLEME BAŞARISIZ."
                 
     return render_template("manuel_solve.html", decrypted_result=decrypted_result, cipher_input=cipher_input)
 
