@@ -9,10 +9,12 @@ app = Flask(__name__)
 # RSA Parametreleri
 P = 61
 Q = 53
-N = 3233
+N = 3233  # P * Q
+PHI = 3120 # (P-1) * (Q-1)
 E = 17
-D = 2753
-EXPIRATION_TIME = 4 * 60  # 4 dakika
+D = 2753   # Gizli anahtar
+
+EXPIRATION_TIME = 4 * 60  # 4 dakika (240 saniye) süre sınırı
 
 def encrypt(text):
     encrypted = [str(pow(ord(char), E, N)) for char in text]
@@ -37,6 +39,7 @@ def index():
             current_time = int(time.time())
             full_payload = f"{c_text}|{current_time}"
             
+            # QR kod okutulduğunda doğrudan /coz sayfasına yönlendirecek link
             base_url = request.host_url.rstrip('/')
             qr_target_url = f"{base_url}/coz?data={full_payload}"
             
@@ -52,7 +55,7 @@ def index():
 def coz():
     data = request.args.get("data", "")
     if not data:
-        return render_template("solve.html", error="VERİ BULUNAMADI!", decrypted=None)
+        return render_template("solve.html", error="VERİ BULUNAMADI!", decrypted=None, cipher_data=None)
     
     try:
         if "|" in data:
@@ -60,6 +63,7 @@ def coz():
             msg_time = int(timestamp_str)
             current_time = int(time.time())
             
+            # Zaman aşımı kontrolü (4 dakika)
             if current_time - msg_time > EXPIRATION_TIME:
                 return render_template("solve.html", error="[!] HATA: QR KODUN SÜRESİ DOLDU (4 Dakikalık TTL Sınırı Aşıldı)", decrypted=None, cipher_data=c_text)
         else:
