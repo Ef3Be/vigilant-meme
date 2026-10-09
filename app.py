@@ -9,12 +9,10 @@ app = Flask(__name__)
 # RSA Parametreleri
 P = 61
 Q = 53
-N = 3233  # P * Q
-PHI = 3120 # (P-1) * (Q-1)
+N = 3233
 E = 17
-D = 2753   # Gizli anahtar
-
-EXPIRATION_TIME = 4 * 60  # 4 dakika süre sınırı
+D = 2753
+EXPIRATION_TIME = 4 * 60  # 4 dakika
 
 def encrypt(text):
     encrypted = [str(pow(ord(char), E, N)) for char in text]
@@ -39,8 +37,6 @@ def index():
             current_time = int(time.time())
             full_payload = f"{c_text}|{current_time}"
             
-            # QR kodun içine doğrudan /coz linkini gömüyoruz
-            # (Render'daki güncel domain adresine göre otomatik algılar veya tam URL yazabilirsin)
             base_url = request.host_url.rstrip('/')
             qr_target_url = f"{base_url}/coz?data={full_payload}"
             
@@ -65,17 +61,17 @@ def coz():
             current_time = int(time.time())
             
             if current_time - msg_time > EXPIRATION_TIME:
-                return render_template("solve.html", error="[!] HATA: QR KODUN SÜRESİ DOLDU! (4 Dakikalık TTL Sınırı Aşıldı)", decrypted=None, cipher_data=c_text)
+                return render_template("solve.html", error="[!] HATA: QR KODUN SÜRESİ DOLDU (4 Dakikalık TTL Sınırı Aşıldı)", decrypted=None, cipher_data=c_text)
         else:
             c_text = data
             
         decrypted = decrypt(c_text)
         if decrypted is None:
-            return render_template("solve.html", error="[!] ŞİFRE ÇÖZÜLEMEDİ (Hatalı Format)", decrypted=None, cipher_data=c_text)
+            return render_template("solve.html", error="[!] ŞİFRE ÇÖZÜLEMEDİ", decrypted=None, cipher_data=c_text)
             
         return render_template("solve.html", decrypted=decrypted, error=None, cipher_data=c_text)
     except Exception as e:
-        return render_template("solve.html", error=f"[!] KRİTİK HATA: {str(e)}", decrypted=None, cipher_data=data)
+        return render_template("solve.html", error=f"[!] HATA: {str(e)}", decrypted=None, cipher_data=data)
 
 @app.route("/cozumle", methods=["GET", "POST"])
 def manuel_cozumle():
